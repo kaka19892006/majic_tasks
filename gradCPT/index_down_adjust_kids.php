@@ -71,7 +71,7 @@ var initChangeTime = 150;
 var testChangeTime = total_transition_time/16;
 var changeTime;  //in ms
 var changePercent = 6.25; //of 100
-var fbTime = 300;
+var fbTime = 500;
 var response_lag = 200;
 var trialStart;
 
@@ -163,13 +163,21 @@ function handleResponse(input, state, mode) {
 				accuracy[which_trial] = 1;
 				if (!pracTimingDone) { 
 					$$$("highlighter").innerHTML = ":-)";
-					$$$("highlighter").style.color = "blue";
+					$$$("highlighter").style.color = "green";
 					timerID = setTimeout("remove_em()",fbTime);
-				}	
+				} else {
+					$$$("highlighter").innerHTML = "<b>o</b>";
+					$$$("highlighter").style.color = "black";
+					timerID = setTimeout("remove_em()",fbTime);
+				}
 			} else if (correct[which_trial] == 0) {
 				if (!pracTimingDone) { 
 					$$$("highlighter").innerHTML = ":-(";
 					$$$("highlighter").style.color = "red";
+					timerID = setTimeout("remove_em()",fbTime);
+				} else {
+					$$$("highlighter").innerHTML = "<b>o</b>";
+					$$$("highlighter").style.color = "black";
 					timerID = setTimeout("remove_em()",fbTime);
 				}
 				//alert("percentage");
@@ -358,7 +366,7 @@ var pracDur2 = 200;
 /****** FUNCTION FOR INITIAL NO TRANSITION PRACTICE TRIALS *******/
 /*****************************************************************/
  
-pracTrials = new Array("images/scrambled.png","images/city1.png","images/city2.png","images/city3.png","images/mountain1.png","images/mountain2.png","images/mountain3.png","images/city4.png","images/mountain4.png","images/city5.png","images/mountain5.png","success.png","fail.png","stop.png");
+pracTrials = new Array("images/scrambled.png","images/city1.png","images/city2.png","images/city3.png","images/mountain1.png","images/mountain2.png","images/mountain3.png","images/city4.png","images/mountain4.png","images/city5.png","images/mountain5.png","success.png","fail.png","continue.png");
 pracCorrect = new Array(0,1,1,1,0,0,0,1,0,1,0);
 pracTotalCorrects = 0;
 
@@ -383,7 +391,9 @@ function practice_begin1() {
 	}
 }
 	
-
+function handleResponseNull(input, state, mode) {
+	document.onkeydown = null;
+}
 
 function handleResponsePrac(input, state, mode) {
 	document.onkeydown = null;
@@ -407,6 +417,12 @@ function feedback(val) {
 		var delay = 1500;
 	}
 	$$$('feedback_image').src = fb;
+	getKeyboardInput_down(
+			[1,2,"space"],
+			handleResponseNull,
+			"test",
+			duration = 0
+			);
 	pracNum++;
 	timerID = setTimeout("practice_begin1()",delay);
 }
@@ -447,43 +463,43 @@ function initiate_trial() {
 </head>
 <body>
 
-<div class="slide" id="stim" style="text-align:center;margin:0 auto">
+<div class="slide" id="stim" style="text-align:center; margin:0 auto">
 
 
 <img class="overlay" id="image1" src="images/scrambled.png" style="z-index:0">
 <img class="overlay" id="image2" src="images/scrambled.png" style="z-index:-1">
 <img class="overlay" id="image2" src="images/gray.png" style="z-index:-2">
-<div id="highlighter" style="position:absolute;width:100px;height:10px;top:326px;left:50%;margin-left:-50px;font-size:3em"></div>
+<div id="highlighter" style="position:absolute;width:100px;height:100px;top:326px;left:50%;margin-left:-85px;font-size:3em"></div>
 
 </div>
 
-<div class="slide" style='text-align:center: margin:0 auto; margin-top:50px' id="feedback_wrapper">
+<div class="slide" style='text-align:center; margin:0 auto; margin-top:50px' id="feedback_wrapper">
 	<img id="feedback_image" src="success.png">
 </div>
 
 
 <div class="slide" id="inst1">
 <div class="text" style="margin:0 auto; margin-top:50px; text-align:center">
-<p><img src="stop.png" style="width:300px;height:300px"></p>
+<p><img src="continue.png" style="width:300px;height:300px"></p>
 <input type="button" onclick="practice_begin1()" value="Practice - No Timing">
 </div></div>
 
 <div class="slide" id="inst2">
 <div class="text" style="margin:0 auto; margin-top:50px; text-align:center">
-<p><img src="stop.png" style="width:300px;height:300px"></p>
+<p><img src="continue.png" style="width:300px;height:300px"></p>
 <input type="button" onclick="trial_begin()" value="Slow Practice">
 </div></div>
 
 <div class="slide" id="inst3">
 <div class="text" style="margin:0 auto; margin-top:50px; text-align:center">
-<p><img src="stop.png" style="width:300px;height:300px"></p>
+<p><img src="continue.png" style="width:300px;height:300px"></p>
 <input type="button" onclick="initiate_speed()" value="Faster Practice">
 </div></div>
 
 
 <div class="slide" id="inst4">
 <div class="text" style="margin:0 auto; margin-top:50px; text-align:center">
-<p><img src="stop.png" style="width:300px;height:300px"></p>
+<p><img src="continue.png" style="width:300px;height:300px"></p>
 <input type="button" onclick="initiate_speed()" value="Begin Test">
 </div></div>
 
