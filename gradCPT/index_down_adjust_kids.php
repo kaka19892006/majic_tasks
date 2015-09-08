@@ -107,6 +107,7 @@ var practice = 0; //three states: 0 if not practice; 1 for first gradonset pract
 
 function initialize() {
 	showSlide("inst1");
+	getKeyboardInput_down(["space"], practice_begin1, "waiting");
 }
 
 function trial_begin() {
@@ -116,9 +117,11 @@ function trial_begin() {
 		//alert("end practice");
 		trialNumber++;
 		showSlide("inst3");
+		getKeyboardInput_down(["space"], initiate_speed, "waiting");		
 	} else if (pracTerminate2 == trialNumber) {
 		trialNumber++;
 		showSlide("inst4");
+		getKeyboardInput_down(["space"], initiate_speed, "waiting");	
 	} else {
 	showSlide("stim");
 	image1 = trials[trialNumber - 1];
@@ -374,6 +377,7 @@ function practice_begin1() {
 	if (pracNum > totalPrac) {
 		//document.onkeydown = null;
 		showSlide("inst2");
+		getKeyboardInput_down(["space"], trial_begin, "waiting");
 	} else {
 		clearTimeout(timerID);
 		image2 = "images/scrambled.png";
@@ -428,12 +432,6 @@ function feedback(val) {
 }
 
 
-
-function repeat_practice1() {
-	pracNum = 1;
-	showSlide("inst1");
-}
-
 function repeat_practice2() {
 	trialNumber = 1;
 	rt = [];
@@ -481,26 +479,26 @@ function initiate_trial() {
 <div class="slide" id="inst1">
 <div class="text" style="margin:0 auto; margin-top:50px; text-align:center">
 <p><img src="continue.png" style="width:300px;height:300px"></p>
-<input type="button" onclick="practice_begin1()" value="Practice - No Timing">
+<!-- <input type="button" onclick="practice_begin1()" value="Practice - No Timing"> -->
 </div></div>
 
 <div class="slide" id="inst2">
 <div class="text" style="margin:0 auto; margin-top:50px; text-align:center">
 <p><img src="continue.png" style="width:300px;height:300px"></p>
-<input type="button" onclick="trial_begin()" value="Slow Practice">
+<!-- <input type="button" onclick="trial_begin()" value="Slow Practice"> -->
 </div></div>
 
 <div class="slide" id="inst3">
 <div class="text" style="margin:0 auto; margin-top:50px; text-align:center">
 <p><img src="continue.png" style="width:300px;height:300px"></p>
-<input type="button" onclick="initiate_speed()" value="Faster Practice">
+<!-- <input type="button" onclick="initiate_speed()" value="Faster Practice"> -->
 </div></div>
 
 
 <div class="slide" id="inst4">
 <div class="text" style="margin:0 auto; margin-top:50px; text-align:center">
 <p><img src="continue.png" style="width:300px;height:300px"></p>
-<input type="button" onclick="initiate_speed()" value="Begin Test">
+<!-- <input type="button" onclick="initiate_speed()" value="Begin Test"> -->
 </div></div>
 
 
