@@ -370,28 +370,12 @@
 
         testMessage =
         {
-            "begin": ("<br><h2><u>Spatial Working Memory Test</u></h2><br><br>"),
-            "practice": [
-                         ("<u>Instructions</u><br><br>" +
-                          "Watch the YELLOW and the BLUE squares.<br><br>"),
-                         ("<u>Instructions</u><br><br>" +
-                          "Were the YELLOW and the BLUE squares in the same place?<br><br>" +
-                          "When the place is the same, press the <font color='green'>  <b>'s'</b> </font> key.<br>" +
-                          "When the place is different, press the <font color='red'>  <b>'d'</b> </font>key.<br><br>" +
-                          "Let's try.<br><br>"),
-                         ("<u>Instructions</u><br><br>" +
-                          "Now watch the YELLOW square move.<br>" +
-                          "Then watch the BLUE square move.<br><br>"),
-                         ("<u>Instructions</u><br><br>" +
-                          "Were the the YELLOW and the BLUE squares in the same places?<br><br>" +
-                          "When the places are the same, press the <font color='green'>  <b>'s'</b> </font> key.<br>" +
-                          "When the places are different, press the <font color='red'>  <b>'d'</b> </font> key.<br><br>" +
-                          "Let's try.<br><br>"),
-                         ("<br>Well done!<br>" +
-                          "Let's do some more practice.<br><br>" +
-                          "When the places are the same, press the  <font color='green'>  <b>'s'</b> </font>key.<br>" +
-                          "When the places are different, press the <font color='red'>  <b>'d'</b> </font> key.<br><br>")
-                        ],
+            "begin": ("<br><h2><u>Spatial Working Memory Test</u></h2><br>" +
+                          "Are the YELLOW and the BLUE squares in the same place?<br><br>" +
+                          "For same, press <font color='green'>  <b>'s'</b></font>.<br>" +
+                          "For different, press <font color='red'>  <b>'d'</b></font>."),
+            "practice": [("When the places are the same, press the <font color='green'><b>'s'</b></font> key.<br>" +
+                          "When the places are different, press the <font color='red'><b>'d'</b> </font> key.<br><br>")],
             "test": ("<br>Excellent!<br>" +
                      "You have completed the practice.<br><br>" +
                      "Now let's do more.<br><br>")
@@ -400,27 +384,27 @@
         // Practice sequence
 
         // type of frame to display
-        var frameType = ["begin","message","example","message","practice",
-                         "message","example","message","practice",
-                         "message","practice","practice","practice","practice","practice","practice",
-                         "message"];
+        var frameType = ["begin",
+                        "practice","practice","practice","practice",
+                        "practice","practice","practice","practice",
+                        "message"];
 
         // message to display
-        var frameMessage = [testMessage.begin,testMessage.practice[0],"",testMessage.practice[1],"",
-                            testMessage.practice[2],"",testMessage.practice[3],"",
-                            testMessage.practice[4],"","","","","","",
+        var frameMessage = [testMessage.begin,
+                            "","","","",
+                            "","","","",
                             testMessage.test];
 
         // number of targets
-        var frameCapacity = [0,0,1,0,1,
-                             0,2,0,2,
-                             0,2,2,2,2,3,3,
+        var frameCapacity = [0,
+                             1,1,2,2,
+                             2,2,2,2,
                              0];
 
         // same or different
-        var frameSameDiff = ["","","different","","same",
-                             "","same","","different",
-                             "","same","same","different","different","same","different",
+        var frameSameDiff = ["",
+                             "same","different","same","different",
+                             "different","same","same","different",
                              ""];
 
         // push all components into the frames chain
@@ -486,7 +470,8 @@
 
         // determine events to listen to
         tmbUI.UIevents = ['keys'];
-        tmbUI.timeout = 60000;
+        tmbUI.timeout = 600000; // no event timeouts 
+        tmbUI.keys = [32,77,90]; // 77 = m, 90 = z, 32 = space
 
         // set the random generator's seed
         Math.seedrandom("SpatialWM");
@@ -522,7 +507,7 @@
 
     function callTimeOutDisplay () {
             showCursor("document.body");
-            //tmbSubmitToServer(results, score);
+            tmbSubmitToServer(results, score);
             showAlert("<br> All Done!")
      }
     
