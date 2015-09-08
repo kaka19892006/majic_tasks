@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<head>
+
+<!-- Title ***************************************************************** -->
+
+    <title>SWM test</title>
+
+<!-- End of Title ********************************************************** -->
+
+<!-- css declarations ****************************************************** -->
+
+    <style type="text/css">
+
+        body
+        {
+            height: 97vh;
+            background: #ffffff;
+            color: #000000;
+            font-family: Palatino Linotype, Bookman Antiqua, Palatino, serif;
+            font-size:13pt;
+
+        }
+
+        .inst
+        {
+            margin: 0 auto;
+            display: block;
+            text-align: center;
+            background: #ffffff;
+            color: #000000;
+            font-size:25pt;
+            font-family: Palatino Linotype, Bookman Antiqua, Palatino, serif;
+        }
+
+        .button
+        {
+            font-size:18px;
+            line-height:2em;
+            text-align:center;
+            font-family: Palatino Linotype, Bookman Antiqua, Palatino, serif;
+        }
+
+        .stim
+        {
+            width: 60px;
+            height: 60px;
+            background: #ffffff;
+            border: 2px solid #000000;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+        }
+
+
+    </style>
+
+<!-- end of css declarations *********************************************** -->
+
+<!-- required js libraries ************************************************* -->
+
+    <script type="text/javascript" src="TestMyBrain.09.01.15.js"></script>
+
+<!-- end of required js libraries ****************************************** -->
+
+<!-- js script ************************************************************* -->
+
+    <script type="text/javascript">
+
+    var matrix = [];                // the matrix of stimulus' DIVs
+    var yellowSeq = [];             // sequential matrix positions of yellow squares
+    var blueSeq = [];               // sequential matrix positions of blue squares
+    var frameSequence = [];         // sequence of frames
+    var frame;                      // single frame
+    var chain;                      // chain of timeouts for stimulus presentation
+    var chainSeq = [];              // array of stimulus events to schedule
+    var alerting = 0;
+    var correct;
+    var success = 0;
+    var capacity = 3;
+    var results = [];               // results object
+    var score = 0;
+    var debug;                      // URL parameter: output to console
+    var demo;                       // URL parameter: run in demo mode
+    var showresults;                // URL parameter: if they want to show results in a popup window
+    var autosave;                   // URL parameter: if they want to save data in a file automatically
+    var filename;                   // filename for data
+    var usage = "";                 // URL parameter: show usage
+
+    function showAlert(alertMessage,alertButton,action,timeout)
+    {
+        // set the message to display
+        getID('alertText').innerHTML = alertMessage;
+
+        // if args contain button text,
+        // show the button and set the required action for it,
+        // otherwise hide the button
+        if(alertButton && !timeout)
+        {
+            getID('alertButton').style.width='300px';
+            getID('alertButton').style.margin='0 auto';
+            getID('alertButton').style.display='block';
+            getID('alertButton').innerHTML = alertButton;
+            getID('alertButton').onclick = action;
+            showCursor("document.body");
+        }
+        else getID('alertButton').style.display='none';
+
+        // if args contain a timeout,
+        // trigger the action automatically when timeout expires
+        if(timeout) setTimeout(action,timeout);
+
+        showFrame('alertBox');
+    }
+
+    tmbUI.onreadyUI = function()
+    {
+        var same, different, errorMessage;
+
+        // clear the stimulus chain, in case it's still running
+        clearChainTimeouts(chain);
+
+        if(alerting)
+        {
+            alerting = 0;
+            nextTrial();
+        }
+
+        // if response timeout, stop the chain
+        else if(tmbUI.status == "timeout")
+        {
+            showAlert("<br>You took too long to respond.<br><br>",
+                      "Click here to resume",
+                      function()
+                      {
+                          hideCursor("document.body");
+                          showFrame("null");
+                          setTimeout(function(){chain = chainTimeouts(chainSeq);},1000);
+                      });
+        }
+
+        // manage the response
+        else
+        {
+            // is the response correct?
+            same = ~frame.sameDiff.indexOf('same');
+            different = ~frame.sameDiff.indexOf('different');
+            correct = ((tmbUI.response == 'l' && same) ||
+                       (tmbUI.response == 'a' && different)) ? 1 : 0;
+
+            // store the results
+            results.push(
+                {
+                    type: frame.type, // one of practice or test
+                    capacity: frame.capacity,
+                    samediff: frame.sameDiff,
+                    response: tmbUI.response, // the key or button pressed
+                    correct: correct, // 1 for correct, 0 for error
+                    rt: tmbUI.rt, // delay b/w onset of flankers and response
+                    state: tmbUI.status // state of the response handler
+                });
+
+            // increment the score
+            if(frame.type == "test") score = score + correct;
+
+            // if we are debugging, log the results
+            if(debug == 'true')
+            {
+                // if there was an error, log the message
+                if(tmbUI.message) console.log(tmbUI.message);
+
+                console.log(frame.type+" "+frame.capacity+" "+frame.sameDiff+" "+
+                            tmbUI.response+" "+correct+" "+tmbUI.rt+" "+tmbUI.status);
+            }
+
+            // deal with errors
+            if(!correct)
+            {
+                // during practice, repeat instructions
+                // and repeat the trial
+                if (frame.type == 'practice')
+                {
+                    errorMessage = "<br>The YELLOW and BLUE squares<br>" +
+                                   (same ? ("were in the <b>same</b> places:<br>" +
+                                            "you should have pressed the <b>'s'</b> key.<br><br>")
+                                         : ("were in <b>different</b> places:<br>" +
+                                            "you should have pressed the <b>'d'</b> key.<br><br>"));
+
+                    showAlert(errorMessage,
+                              "Click here to retry",
+                              function ()
+                              {
+                                hideCursor("document.body");
+                                showFrame("null");
+                                setTimeout(function () {chain = chainTimeouts(chainSeq);}, 1000);
+                              });
+                }
+
+                // else give feedback and advance to the next trial
+                else
+                {
+                    showAlert("<br>Sorry, that was wrong.<br><br>" +
+                              "Press any key to continue",
+                              "",
+                              function () {alerting = 1; tmbUI.getInput();},
+                              50);
+                }
+            }
+
+            // response is correct
+            else
+            {
+                showAlert("<br>Correct!<br><br>"+
+                          "Press any key to continue",
+                          "",
+                          function() {alerting = 1; tmbUI.getInput();},
+                          50);
+            }
+        }
+    };
+
+    function nextTrial()
+    {
+        var i, index1 = 0, index2 = 24;
+
+        // read the frame sequence one frame at a time
+        if(frame = frameSequence.shift())
+        {
+            // check if it's the startup frame
+            if(frame.type=="begin") showAlert(frame.message,
+                                              "Click here for instructions",
+                                              function() {nextTrial();});
+
+            // check if it's a message frame
+            else if(frame.type=="message") showAlert(frame.message,
+                                                     "Click here to continue",
+                                                     function ()
+                                                     {
+                                                        hideCursor("document.body");
+                                                        showFrame("null");
+                                                        setTimeout(function(){nextTrial();},1000);
+                                                     });
+            // check if it's an example, practice or test frame
+            else if(frame.type=="example" || frame.type=="practice" || frame.type=="test")
+            {
+                // shuffle the sequence of matrix positions of the squares
+                yellowSeq.shuffle();
+                for(i = 0; i < yellowSeq.length; i++) blueSeq[i] = yellowSeq[i];
+
+                if(frame.type == "test")
+                {
+                    if(correct)
+                    {
+                        success++;
+                        if(success > 1) capacity++;
+                    }
+                    else
+                    {
+                        success = 0;
+                        capacity--;
+                        if(capacity < 1) capacity = 1;
+                    }
+                    frame.capacity = capacity;
+                }
+
+                // if this is a 'different' trial,
+                // change one of the targets,
+                // restricting change within neighboring positions
+                if(frame.sameDiff == "different")
+                {
+                    while(Math.abs(matrixX[yellowSeq[index1]]-matrixX[yellowSeq[index2]]) > 1 ||
+                          Math.abs(matrixY[yellowSeq[index1]]-matrixY[yellowSeq[index2]]) > 1)
+                    {
+                        index1 = randInt(frame.capacity);
+                        index2 = randInt(frame.capacity,24);
+                    }
+
+                    blueSeq[index1] = yellowSeq[index2];
+                }
+
+                // we use this for closure
+                function setChain (square,color)
+                {
+                    chainSeq.push(
+                            500,
+                            function () {getID(square).style.backgroundColor = color;},
+                            900,
+                            function () {getID(square).style.backgroundColor = 'white';}
+                    );
+                }
+
+                // build the stimulus chain
+                chainSeq =  [function(){showFrame(matrix);}];
+
+                for(i = 0; i < frame.capacity; i++)
+                    setChain(matrix[yellowSeq[i]],'yellow');
+
+                chainSeq.push(1000,function () {showFrame(matrix)});
+
+                for(i = 0; i < frame.capacity; i++)
+                    setChain(matrix[blueSeq[i]],'blue');
+
+                chainSeq.push(
+                              700,
+                              function()
+                              {
+                                showFrame(null);
+                                showCursor("document.body");
+                                if(frame.type=="example") nextTrial();
+                                else
+                                {
+                                    tmbUI.getInput();
+                                    showAlert("<br><br>Press:<br><br><b>'s'</b> for SAME," +
+                                              "<br><b>'d'</b> for DIFFERENT.<br>");
+                                }
+                              }
+                             );
+
+                hideCursor("document.body");
+
+                // chain the stimulus presentation
+                chain = chainTimeouts(chainSeq);
+            }
+        }
+        // else if the sequence is empty, we are done!
+        else
+        {
+            showCursor("document.body");
+
+            if(showresults == 'true' || autosave == 'true' || filename)
+            {
+                if(filename == false) filename = "FlankerResults.csv";
+                tmbSubmitToFile(results,filename,autosave);
+
+                showAlert("<br>Your score is " + score +
+                          "<br><br>The test is over.<br>" +
+                          "Thank you for participating!<br><br>",
+                          "",
+                          null);
+            }
+            else
+            {
+                tmbSubmitToServer(results,score);
+            }
+        }
+    }
+
+    function setFrameSequence ()
+    {
+        var testMessage;
+
+        // messages
+
+        testMessage =
+        {
+            "begin": ("<br><h2><u>Spatial Working Memory Test</u></h2><br><br>"),
+            "practice": [
+                         ("<u>Instructions</u><br><br>" +
+                          "Watch the YELLOW and the BLUE squares.<br><br>"),
+                         ("<u>Instructions</u><br><br>" +
+                          "Were the YELLOW and the BLUE squares in the same place?<br><br>" +
+                          "When the place is the same, press the <b>'s'</b> key.<br>" +
+                          "When the place is different, press the <b>'d'</b> key.<br><br>" +
+                          "Let's try.<br><br>"),
+                         ("<u>Instructions</u><br><br>" +
+                          "Now watch the YELLOW square move.<br>" +
+                          "Then watch the BLUE square move.<br><br>"),
+                         ("<u>Instructions</u><br><br>" +
+                          "Were the the YELLOW and the BLUE squares in the same places?<br><br>" +
+                          "When the places are the same, press the <b>'s'</b> key.<br>" +
+                          "When the places are different, press the <b>'d'</b> key.<br><br>" +
+                          "Let's try.<br><br>"),
+                         ("<br>Well done!<br>" +
+                          "Let's do some more practice.<br><br>" +
+                          "When the places are the same, press the <b>'s'</b> key.<br>" +
+                          "When the places are different, press the <b>'d'</b> key.<br><br>")
+                        ],
+            "test": ("<br>Excellent!<br>" +
+                     "You have completed the practice.<br><br>" +
+                     "Now let's do more.<br><br>")
+        };
+
+        // Practice sequence
+
+        // type of frame to display
+        var frameType = ["begin","message","example","message","practice",
+                         "message","example","message","practice",
+                         "message","practice","practice","practice","practice","practice","practice",
+                         "message"];
+
+        // message to display
+        var frameMessage = [testMessage.begin,testMessage.practice[0],"",testMessage.practice[1],"",
+                            testMessage.practice[2],"",testMessage.practice[3],"",
+                            testMessage.practice[4],"","","","","","",
+                            testMessage.test];
+
+        // number of targets
+        var frameCapacity = [0,0,1,0,1,
+                             0,2,0,2,
+                             0,2,2,2,2,3,3,
+                             0];
+
+        // same or different
+        var frameSameDiff = ["","","different","","same",
+                             "","same","","different",
+                             "","same","same","different","different","same","different",
+                             ""];
+
+        // push all components into the frames chain
+        for(var i=0; i<frameType.length; i++)
+        {
+            frameSequence.push(
+                    {
+                        type: frameType[i],
+                        message: frameMessage[i],
+                        capacity: frameCapacity[i],
+                        sameDiff: frameSameDiff[i]
+                    });
+        }
+
+        // test sequence
+
+        frameSameDiff = ["same","different","same","different","same","different",
+                         "same","different","same","different","same","different",
+                         "same","different","same","different","same","different",
+                         "same","different","same","different","same","different"];
+        frameSameDiff.shuffle().shuffle();
+
+        // push all components into the frames chain
+        for(i=0; i < (demo == "true" ? 5 : frameSameDiff.length); i++)
+        {
+            frameSequence.push(
+                    {
+                        type: "test",
+                        message: "",
+                        capacity: 3,
+                        sameDiff: frameSameDiff[i]
+                    });
+        }
+
+    }
+
+    window.onload = function()
+    {
+        // see if they are just asking for help
+        if ((usage = getUrlParameters("help", "", true)))
+        {
+            showAlert("Usage:<br>SpatialWM.html?demo=true&debug=true&" +
+                    "showresults=true&autosave=true&" +
+                    "filename=subject1.csv&help<br><br>");
+            return;
+        }
+
+        // check if this is a debug session
+        debug = getUrlParameters("debug", "", true);
+        if (debug == "true")
+        {
+            console.log("Type Capacity SameDiff Response Correct RT Status");
+        }
+
+        // check if they want a demo run
+        demo = getUrlParameters("demo", "", true);
+
+        // check if they want to load results in a new page when the test is over,
+        // if data is to be saved automatically to a file and the filename
+        showresults = getUrlParameters("showresults", "", true);
+        autosave = getUrlParameters("autosave", "", true);
+        filename = getUrlParameters("filename", "", true);
+
+        // determine events to listen to
+        tmbUI.UIevents = ['keys'];
+        tmbUI.timeout = 60000;
+
+        // set the random generator's seed
+        Math.seedrandom("SpatialWM");
+
+        // disable spurious user interaction
+        disableSelect();
+        disableRightClick();
+        disableDrag();
+
+        matrix = ["square-1","square-2","square-3","square-4","square-5",
+                  "square-6","square-7","square-8","square-9","square-10",
+                  "square-11","square-12","square-13","square-14","square-15",
+                  "square-16","square-17","square-18","square-19","square-20",
+                  "square-21","square-22","square-23","square-24","square-25"];
+        matrixX = [0,1,2,3,4,
+                   0,1,2,3,4,
+                   0,1,2,3,4,
+                   0,1,2,3,4,
+                   0,1,2,3,4];
+        matrixY = [0,0,0,0,0,
+                   1,1,1,1,1,
+                   2,2,2,2,2,
+                   3,3,3,3,3,
+                   4,4,4,4,4];
+        yellowSeq = range(0,24);
+        blueSeq = range(0,24);
+
+        // create the trials chain and start the testing sequence
+        setFrameSequence();
+        nextTrial();
+    }
+
+    </script>
+
+<!-- end of js script ****************************************************** -->
+
+</head>
+
+<!-- HTML markup *********************************************************** -->
+
+<body>
+
+    <!-- this DIV is used to show a message and continue the test sequence-->
+    <div id="alertBox" class="inst" style="display: none">
+        <span class="instSpan" id="alertText">This is a placeholder.</span>
+        <button type="button" class="button" id="alertButton">Click here</button>
+        <br>
+    </div>
+
+    <!-- stimulus DIVs -->
+
+
+    <div id="square-1" class="stim" style="display: none; margin: -230px auto auto -230px"></div>
+    <div id="square-2" class="stim" style="display: none; margin: -230px auto auto -130px"></div>
+    <div id="square-3" class="stim" style="display: none; margin: -230px auto auto -30px"></div>
+    <div id="square-4" class="stim" style="display: none; margin: -230px auto auto 70px"></div>
+    <div id="square-5" class="stim" style="display: none; margin: -230px auto auto 170px"></div>
+    <div id="square-6" class="stim" style="display: none; margin: -130px auto auto -230px"></div>
+    <div id="square-7" class="stim" style="display: none; margin: -130px auto auto -130px"></div>
+    <div id="square-8" class="stim" style="display: none; margin: -130px auto auto -30px"></div>
+    <div id="square-9" class="stim" style="display: none; margin: -130px auto auto 70px"></div>
+    <div id="square-10" class="stim" style="display: none; margin: -130px auto auto 170px"></div>
+    <div id="square-11" class="stim" style="display: none; margin: -30px auto auto -230px"></div>
+    <div id="square-12" class="stim" style="display: none; margin: -30px auto auto -130px"></div>
+    <div id="square-13" class="stim" style="display: none; margin: -30px auto auto -30px"></div>
+    <div id="square-14" class="stim" style="display: none; margin: -30px auto auto 70px"></div>
+    <div id="square-15" class="stim" style="display: none; margin: -30px auto auto 170px"></div>
+    <div id="square-16" class="stim" style="display: none; margin: 70px auto auto -230px"></div>
+    <div id="square-17" class="stim" style="display: none; margin: 70px auto auto -130px"></div>
+    <div id="square-18" class="stim" style="display: none; margin: 70px auto auto -30px"></div>
+    <div id="square-19" class="stim" style="display: none; margin: 70px auto auto 70px"></div>
+    <div id="square-20" class="stim" style="display: none; margin: 70px auto auto 170px"></div>
+    <div id="square-21" class="stim" style="display: none; margin: 170px auto auto -230px"></div>
+    <div id="square-22" class="stim" style="display: none; margin: 170px auto auto -130px"></div>
+    <div id="square-23" class="stim" style="display: none; margin: 170px auto auto -30px"></div>
+    <div id="square-24" class="stim" style="display: none; margin: 170px auto auto 70px"></div>
+    <div id="square-25" class="stim" style="display: none; margin: 170px auto auto 170px"></div>
+
+
+    <noscript>
+        For full functionality of this site it is necessary to enable JavaScript.<br>
+        Here are the <a href="http://www.enable-javascript.com/" target="_blank">
+        instructions</a> how to enable JavaScript in your web browser.
+    </noscript>
+
+</body>
+
+</html>
