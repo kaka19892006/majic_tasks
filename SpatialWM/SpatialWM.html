@@ -147,8 +147,8 @@
             // is the response correct?
             same = ~frame.sameDiff.indexOf('same');
             different = ~frame.sameDiff.indexOf('different');
-            correct = ((tmbUI.response == 'l' && same) ||
-                       (tmbUI.response == 'a' && different)) ? 1 : 0;
+            correct = ((tmbUI.response == 'm' && same) ||
+                       (tmbUI.response == 'z' && different)) ? 1 : 0;
 
             // store the results
             results.push(
@@ -189,36 +189,46 @@
                                             "you should have pressed the <b>'d'</b> key.<br><br>"));
 
                     showAlert(errorMessage,
-                              "Click here to retry",
-                              function ()
-                              {
-                                hideCursor("document.body");
-                                showFrame("null");
-                                setTimeout(function () {chain = chainTimeouts(chainSeq);}, 1000);
-                              });
-                }
-
-                // else give feedback and advance to the next trial
+                              "Click here to continue",
+                              function () {nextTrial();});
+                              // {
+                              //   hideCursor("document.body");
+                              //   showFrame("null");
+                              //   // setTimeout(function () {chain = chainTimeouts(chainSeq);}, 1000);
+                              // });
+                } 
+                // else advance to the next trial
                 else
                 {
-                    showAlert("<br>Sorry, that was wrong.<br><br>" +
-                              "Press any key to continue",
-                              "",
-                              function () {alerting = 1; tmbUI.getInput();},
-                              50);
+                    showAlert("<br>Press any key to continue",
+                                "",
+                                function () {alerting = 1; tmbUI.getInput();},
+                                50);
                 }
             }
-
             // response is correct
-            else
-            {
-                showAlert("<br>Correct!<br><br>"+
-                          "Press any key to continue",
-                          "",
-                          function() {alerting = 1; tmbUI.getInput();},
-                          50);
-            }
-        }
+            //first for practice trials give correct feedback
+            //for test trials no feedback
+                else 
+                {
+                    if(frame.type == 'practice')
+                    {
+                       showAlert("<br>Correct!<br><br>"+
+                              "Press any key to continue",
+                              "",
+                              function() {alerting = 1; tmbUI.getInput();},
+                              50); 
+                    }
+                    else
+                    {
+                        showAlert("<br>Press any key to continue",
+                                "",
+                                function () {alerting = 1; tmbUI.getInput();},
+                                50);
+                    }
+
+                }
+            }   
     };
 
     function nextTrial()
@@ -236,12 +246,12 @@
             // check if it's a message frame
             else if(frame.type=="message") showAlert(frame.message,
                                                      "Click here to continue",
-                                                     function ()
-                                                     {
-                                                        hideCursor("document.body");
-                                                        showFrame("null");
-                                                        setTimeout(function(){nextTrial();},1000);
-                                                     });
+                                                     function () {nextTrial();});
+                                                     // {
+                                                     //    hideCursor("document.body");
+                                                     //    showFrame("null");
+                                                     //    setTimeout(function(){nextTrial();},1000);
+                                                     // });
             // check if it's an example, practice or test frame
             else if(frame.type=="example" || frame.type=="practice" || frame.type=="test")
             {
