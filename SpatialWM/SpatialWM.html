@@ -88,25 +88,35 @@
     var autosave;                   // URL parameter: if they want to save data in a file automatically
     var filename;                   // filename for data
     var usage = "";                 // URL parameter: show usage
+    var nextAction;           // allow space bar to do anything? Advances if T. 
+    var phase;
+
+
 
     function showAlert(alertMessage,alertButton,action,timeout)
     {
         // set the message to display
         getID('alertText').innerHTML = alertMessage;
-
+        phase = ""
         // if args contain button text,
         // show the button and set the required action for it,
         // otherwise hide the button
-        if(alertButton && !timeout)
-        {
-            getID('alertButton').style.width='300px';
-            getID('alertButton').style.margin='0 auto';
-            getID('alertButton').style.display='block';
-            getID('alertButton').innerHTML = alertButton;
-            getID('alertButton').onclick = action;
-            showCursor("document.body");
+        //if(alertButton && !timeout)
+        //{
+        //     getID('alertButton').style.width='300px';
+        //     getID('alertButton').style.margin='0 auto';
+        //     getID('alertButton').style.display='block';
+        //     getID('alertButton').innerHTML = alertButton;
+        //     getID('alertButton').onclick = action;
+        //     showCursor("document.body");
+        // }
+        // else getID('alertButton').style.display='none';
+
+        if (alertButton == "space"){
+            tmbUI.getInput();
+            phase = "instructions"
+            nextAction = action
         }
-        else getID('alertButton').style.display='none';
 
         // if args contain a timeout,
         // trigger the action automatically when timeout expires
@@ -126,8 +136,10 @@
         {
             alerting = 0;
             nextTrial();
-        }
-
+        } 
+        else if (tmbUI.response == "space" && phase == "instructions") {
+            eval(nextAction)
+        }       
         // if response timeout, stop the chain
         else if(tmbUI.status == "timeout")
         {
@@ -147,8 +159,8 @@
             // is the response correct?
             same = ~frame.sameDiff.indexOf('same');
             different = ~frame.sameDiff.indexOf('different');
-            correct = ((tmbUI.response == 'l' && same) ||
-                       (tmbUI.response == 'a' && different)) ? 1 : 0;
+            correct = ((tmbUI.response == 'm' && same) ||
+                       (tmbUI.response == 'z' && different)) ? 1 : 0;
 
             // store the results
             results.push(
@@ -184,28 +196,23 @@
                 {
                     errorMessage = "<br>The YELLOW and BLUE squares<br>" +
                                    (same ? ("were in the <b>same</b> places:<br>" +
-                                            "you should have pressed the <b>'s'</b> key.<br><br>")
+                                            "you should have pressed the  <font color='green'>  <b>'s'</b> </font> key.<br><br>")
                                          : ("were in <b>different</b> places:<br>" +
-                                            "you should have pressed the <b>'d'</b> key.<br><br>"));
+                                            "you should have pressed the  <font color='red'>  <b>'d'</b> </font> key.<br><br>"));
 
-                    showAlert(errorMessage,
-                              "Click here to retry",
-                              function ()
-                              {
-                                hideCursor("document.body");
-                                showFrame("null");
-                                setTimeout(function () {chain = chainTimeouts(chainSeq);}, 1000);
-                              });
+                    showAlert(errorMessage + "<br><br> Press the SPACEBAR to continue." ,
+                              "space", 
+                              "nextTrial()")
+                                //"hideCursor(\"document.body\");showFrame(\"null\"); setTimeout(function () {chain = chainTimeouts(chainSeq);}, 1000);")
                 }
 
                 // else give feedback and advance to the next trial
                 else
                 {
                     showAlert("<br>Sorry, that was wrong.<br><br>" +
-                              "Press any key to continue",
-                              "",
-                              function () {alerting = 1; tmbUI.getInput();},
-                              50);
+                              "Press the SPACEBAR to continue",
+                              "space",
+                              "nextTrial()");
                 }
             }
 
@@ -213,10 +220,9 @@
             else
             {
                 showAlert("<br>Correct!<br><br>"+
-                          "Press any key to continue",
-                          "",
-                          function() {alerting = 1; tmbUI.getInput();},
-                          50);
+                          "Press the SPACEBAR to continue",
+                          "space",
+                          "nextTrial()");
             }
         }
     };
@@ -229,19 +235,17 @@
         if(frame = frameSequence.shift())
         {
             // check if it's the startup frame
-            if(frame.type=="begin") showAlert(frame.message,
-                                              "Click here for instructions",
-                                              function() {nextTrial();});
+            if(frame.type=="begin") showAlert(frame.message + "<br><br> Press the SPACEBAR to continue.",
+                                              "space",
+                                              "nextTrial()");
 
             // check if it's a message frame
-            else if(frame.type=="message") showAlert(frame.message,
-                                                     "Click here to continue",
-                                                     function ()
-                                                     {
-                                                        hideCursor("document.body");
-                                                        showFrame("null");
-                                                        setTimeout(function(){nextTrial();},1000);
-                                                     });
+            else if(frame.type=="message") showAlert(frame.message + "<br><br> Press the SPACEBAR to continue." ,
+                                                     "space",
+                                                     //quote(hideCursor("document.body");
+                                                      //  showFrame("null");
+                                                        //setTimeout(function(){nextTrial();},1000);)
+                                                        "nextTrial()");
             // check if it's an example, practice or test frame
             else if(frame.type=="example" || frame.type=="practice" || frame.type=="test")
             {
@@ -312,10 +316,10 @@
                                 else
                                 {
                                     tmbUI.getInput();
-                                    showAlert("<br><br>Press:<br><br><b>'s'</b> for SAME," +
-                                              "<br><b>'d'</b> for DIFFERENT.<br>");
+                                    showAlert("<br><br>Press:<br><br> <font color='green'> <b>'s'</b> </font> for SAME," +
+                                              "<br> <font color='red'>  <b>'d'</b> </font> for DIFFERENT.<br>");
                                 }
-                              }
+                           }
                              );
 
                 hideCursor("document.body");
@@ -361,21 +365,21 @@
                           "Watch the YELLOW and the BLUE squares.<br><br>"),
                          ("<u>Instructions</u><br><br>" +
                           "Were the YELLOW and the BLUE squares in the same place?<br><br>" +
-                          "When the place is the same, press the <b>'s'</b> key.<br>" +
-                          "When the place is different, press the <b>'d'</b> key.<br><br>" +
+                          "When the place is the same, press the <font color='green'>  <b>'s'</b> </font> key.<br>" +
+                          "When the place is different, press the <font color='red'>  <b>'d'</b> </font>key.<br><br>" +
                           "Let's try.<br><br>"),
                          ("<u>Instructions</u><br><br>" +
                           "Now watch the YELLOW square move.<br>" +
                           "Then watch the BLUE square move.<br><br>"),
                          ("<u>Instructions</u><br><br>" +
                           "Were the the YELLOW and the BLUE squares in the same places?<br><br>" +
-                          "When the places are the same, press the <b>'s'</b> key.<br>" +
-                          "When the places are different, press the <b>'d'</b> key.<br><br>" +
+                          "When the places are the same, press the <font color='green'>  <b>'s'</b> </font> key.<br>" +
+                          "When the places are different, press the <font color='red'>  <b>'d'</b> </font> key.<br><br>" +
                           "Let's try.<br><br>"),
                          ("<br>Well done!<br>" +
                           "Let's do some more practice.<br><br>" +
-                          "When the places are the same, press the <b>'s'</b> key.<br>" +
-                          "When the places are different, press the <b>'d'</b> key.<br><br>")
+                          "When the places are the same, press the  <font color='green'>  <b>'s'</b> </font>key.<br>" +
+                          "When the places are different, press the <font color='red'>  <b>'d'</b> </font> key.<br><br>")
                         ],
             "test": ("<br>Excellent!<br>" +
                      "You have completed the practice.<br><br>" +
@@ -502,7 +506,15 @@
         // create the trials chain and start the testing sequence
         setFrameSequence();
         nextTrial();
+        setTimeout(callTimeOutDisplay, 2000) //600000 (10 min)
     }
+
+    function callTimeOutDisplay () {
+            showCursor("document.body");
+            //tmbSubmitToServer(results, score);
+            showAlert("<br> All Done!")
+     }
+    
 
     </script>
 
@@ -517,7 +529,7 @@
     <!-- this DIV is used to show a message and continue the test sequence-->
     <div id="alertBox" class="inst" style="display: none">
         <span class="instSpan" id="alertText">This is a placeholder.</span>
-        <button type="button" class="button" id="alertButton">Click here</button>
+        <!--<button type="button" class="button" id="alertButton">Click here</button>-->
         <br>
     </div>
 
