@@ -113,6 +113,7 @@
         // else getID('alertButton').style.display='none';
 
         if (alertButton == "space"){
+            tmbUI.keys = [32]; // 77 = m, 90 = z, 32 = space
             tmbUI.getInput();
             phase = "instructions"
             nextAction = action
@@ -325,6 +326,7 @@
                                 if(frame.type=="example") nextTrial();
                                 else
                                 {
+                                    tmbUI.keys = [77,90]; // 77 = m, 90 = z, 32 = space
                                     tmbUI.getInput();
                                     showAlert("<br><br>Press:<br><br> <font color='green'> <b>'s'</b> </font> for SAME," +
                                               "<br> <font color='red'>  <b>'d'</b> </font> for DIFFERENT.<br>");
@@ -470,7 +472,6 @@
         // determine events to listen to
         tmbUI.UIevents = ['keys'];
         tmbUI.timeout = 600000; // no event timeouts 
-        tmbUI.keys = [32,77,90]; // 77 = m, 90 = z, 32 = space
 
         // set the random generator's seed
         Math.seedrandom("SpatialWM");
