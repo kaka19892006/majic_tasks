@@ -201,7 +201,7 @@
                                          : ("were in <b>different</b> places:<br>" +
                                             "you should have pressed the  <font color='red'>  <b>'d'</b> </font> key.<br><br>"));
 
-                   showAlert(errorMessage + "<br><br> Press the SPACEBAR to continue." ,
+                   showAlert(errorMessage + "<br><br> Press SPACEBAR to continue." ,
                               "space", 
                               "nextTrial()")
                                 //"hideCursor(\"document.body\");showFrame(\"null\"); setTimeout(function () {chain = chainTimeouts(chainSeq);}, 1000);")
@@ -209,7 +209,7 @@
                 // else advance to the next trial
                 else
                 {
-                    showAlert("<br><br>Press the SPACEBAR to continue",
+                    showAlert("<br><br>Press SPACEBAR to continue",
                               "space",
                               "nextTrial()");
                 }
@@ -222,7 +222,7 @@
                     if(frame.type == 'practice')
                     {
                        showAlert("<br>Correct!<br><br>"+
-                          "Press the SPACEBAR to continue",
+                          "Press SPACEBAR to continue",
                           "space",
                           "nextTrial()"); 
                     }
@@ -246,12 +246,12 @@
         if(frame = frameSequence.shift())
         {
             // check if it's the startup frame
-            if(frame.type=="begin") showAlert(frame.message + "<br><br> Press the SPACEBAR to continue.",
+            if(frame.type=="begin") showAlert(frame.message + "<br><br> Press SPACEBAR to continue.",
                                               "space",
                                               "nextTrial()");
 
             // check if it's a message frame
-            else if(frame.type=="message") showAlert(frame.message + "<br><br> Press the SPACEBAR to continue." ,
+            else if(frame.type=="message") showAlert(frame.message + "<br><br> Press SPACEBAR to continue." ,
                                                      "space",
                                                      //quote(hideCursor("document.body");
                                                       //  showFrame("null");
